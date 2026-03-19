@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="mobile-web-app-capable" content="yes">
+<title>תור גוזר — גאנה בדים</title>
+<style>
+  /* ============================================================
+     IMPORTANT: החלף את SCRIPT_URL בכתובת ה-Apps Script שלך!
+     ראה הוראות בתחתית הקובץ.
+  ============================================================ */
+
+  @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg:          #0f0f11;
+    --surface:     #1a1a1f;
+    --surface2:    #222228;
+    --border:      rgba(255,255,255,0.07);
+    --border-hi:   rgba(255,255,255,0.14);
+    --text:        #e8e6e1;
+    --text-dim:    #888680;
+    --text-faint:  #4a4a50;
+    --amber:       #f4a738;
+    --amber-bg:    rgba(244,167,56,0.12);
+    --blue:        #4e9cf5;
+    --blue-bg:     rgba(78,156,245,0.10);
+    --green:       #4db87a;
+    --green-bg:    rgba(77,184,122,0.10);
+    --red:         #e05555;
+    --red-bg:      rgba(224,85,85,0.10);
+    --radius:      14px;
+    --radius-sm:   8px;
+    font-family: 'Rubik', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  /* ── Header ── */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,15,17,0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-logo {
+    font-size: 17px; font-weight: 600; letter-spacing: -0.3px;
+  }
+  .header-logo span { color: var(--amber); }
+
+  .badge-count {
+    background: var(--amber); color: #000;
+    font-size: 12px; font-weight: 700;
+    border-radius: 20px; padding: 2px 8px;
+    min-width: 24px; text-align: center;
+    display: none;
+  }
+  .badge-count.visible { display: inline-block; }
+
+  /* ── Filter bar ── */
+  .filter-bar {
+    display: flex; gap: 8px;
+    padding: 12px 16px;
+    overflow-x: auto; scrollbar-width: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Rubik', sans-serif;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:active { transform: scale(0.96); }
+  .filter-btn.active { background: var(--amber); border-color: var(--amber); color: #000; }
+  .filter-btn.status-ממתין.active { background: var(--amber); border-color: var(--amber); color: #000; }
+  .filter-btn.status-בחיתוך.active { background: var(--blue);  border-color: var(--blue);  color: #000; }
+  .filter-btn.status-מוכן.active   { background: var(--green); border-color: var(--green); color: #000; }
+
+  /* ── Main content ── */
+  .main { padding: 12px 12px 100px; }
+
+  /* ── States ── */
+  .state-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 12px;
+    min-height: 50vh; padding: 32px;
+    color: var(--text-faint); font-size: 15px; text-align: center;
+  }
+  .state-icon { font-size: 40px; }
+
+  /* ── Order card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    position: relative;
+    transition: border-color 0.2s, transform 0.15s;
+    animation: slideIn 0.25s ease both;
+  }
+  .card:active { transform: scale(0.99); }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* left accent strip */
+  .card::before {
+    content: '';
+    position: absolute; top: 12px; right: -1px; bottom: 12px;
+    width: 3px; border-radius: 3px 0 0 3px;
+  }
+  .card[data-status="ממתין"]::before  { background: var(--amber); }
+  .card[data-status="בחיתוך"]::before { background: var(--blue);  }
+  .card[data-status="מוכן"]::before   { background: var(--green); }
+
+  .card-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .order-id {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    color: var(--text-faint); text-transform: uppercase;
+  }
+  .status-pill {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px; border: 1px solid;
+  }
+  .status-pill.ממתין  { color: var(--amber); border-color: var(--amber); background: var(--amber-bg); }
+  .status-pill.בחיתוך { color: var(--blue);  border-color: var(--blue);  background: var(--blue-bg);  }
+  .status-pill.מוכן   { color: var(--green); border-color: var(--green); background: var(--green-bg); }
+
+  .fabric-name {
+    font-size: 20px; font-weight: 700; margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+  .customer-name {
+    font-size: 13px; color: var(--text-dim); margin-bottom: 12px;
+  }
+
+  .meta-row {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .meta-item {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .meta-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  .meta-value {
+    font-size: 15px; font-weight: 500;
+  }
+  .meta-value.highlight { color: var(--amber); }
+
+  .notes-text {
+    font-size: 12px; color: var(--text-dim);
+    background: var(--surface2); border-radius: var(--radius-sm);
+    padding: 8px 10px; margin-bottom: 14px;
+    border-right: 2px solid var(--text-faint);
+  }
+
+  /* ── Action section ── */
+  .action-section {
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  .qty-input-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .qty-label {
+    font-size: 12px; color: var(--text-dim); white-space: nowrap;
+  }
+  .qty-input {
+    flex: 1;
+    background: var(--surface2); border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: 'Rubik', sans-serif; font-size: 16px; font-weight: 500;
+    padding: 9px 12px; text-align: center;
+    -webkit-appearance: none;
+    transition: border-color 0.15s;
+  }
+  .qty-input:focus {
+    outline: none; border-color: var(--amber);
+  }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; padding: 13px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-hi);
+    font-family: 'Rubik', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-start  { background: var(--blue-bg);  border-color: var(--blue);  color: var(--blue);  }
+  .btn-done   { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .btn-report { background: var(--red-bg);   border-color: var(--red);   color: var(--red);   flex: 0 0 auto; padding: 13px 14px; }
+
+  .btn:disabled { opacity: 0.4; pointer-events: none; }
+
+  /* spinner inside button */
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Toast notification ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    z-index: 999;
+    background: var(--surface2); border: 1px solid var(--border-hi);
+    border-radius: 30px; padding: 10px 20px;
+    font-size: 13px; font-weight: 500;
+    white-space: nowrap;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error   { border-color: var(--red);   color: var(--red);   }
+
+  /* ── Refresh fab ── */
+  .fab {
+    position: fixed; bottom: 24px; left: 20px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border-hi);
+    color: var(--text-dim);
+    font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .fab:active { transform: scale(0.92); }
+  .fab.spinning { animation: spin 0.8s linear infinite; }
+
+  /* ── Config overlay ── */
+  .config-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: flex-end;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .config-overlay.open { opacity: 1; pointer-events: all; }
+  .config-sheet {
+    width: 100%; background: var(--surface);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 24px 20px 40px;
+    border: 1px solid var(--border);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.34,1.4,0.64,1);
+  }
+  .config-overlay.open .config-sheet { transform: translateY(0); }
+  .config-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .config-input {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm);
+    color: var(--text); font-family: 'Rubik', sans-serif;
+    font-size: 13px; padding: 11px 12px; margin-bottom: 12px;
+    direction: ltr;
+  }
+  .config-input:focus { outline: none; border-color: var(--amber); }
+  .config-hint {
+    font-size: 11px; color: var(--text-faint);
+    margin-bottom: 20px; line-height: 1.6;
+  }
+  .config-save {
+    width: 100%; padding: 13px;
+    background: var(--amber); border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Rubik', sans-serif; font-size: 15px; font-weight: 700;
+    color: #000; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ Header ══ -->
+<header class="header">
+  <div class="header-logo">גאנה <span>בדים</span></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="badge" class="badge-count"></span>
+    <button onclick="openConfig()" style="background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;padding:4px" title="הגדרות">⚙</button>
+  </div>
+</header>
+
+<!-- ══ Filter bar ══ -->
+<div class="filter-bar">
+  <button class="filter-btn active" data-filter="all"     onclick="setFilter('all',this)">הכל</button>
+  <button class="filter-btn status-ממתין"  data-filter="ממתין"  onclick="setFilter('ממתין',this)">ממתין</button>
+  <button class="filter-btn status-בחיתוך" data-filter="בחיתוך" onclick="setFilter('בחיתוך',this)">בחיתוך</button>
+  <button class="filter-btn status-מוכן"   data-filter="מוכן"   onclick="setFilter('מוכן',this)">מוכן</button>
+</div>
+
+<!-- ══ Cards ══ -->
+<main class="main" id="cardsWrap"></main>
+
+<!-- ══ Toast ══ -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ Refresh FAB ══ -->
+<button class="fab" id="fab" onclick="loadOrders()" title="רענן">↻</button>
+
+<!-- ══ Config overlay ══ -->
+<div class="config-overlay" id="configOverlay" onclick="closeConfigOnBg(event)">
+  <div class="config-sheet">
+    <div class="config-title">חיבור ל-Google Sheet</div>
+    <input class="config-input" id="scriptUrlInput" type="url"
+           placeholder="https://script.google.com/macros/s/…/exec"
+           autocomplete="off" spellcheck="false">
+    <div class="config-hint">
+      1. פתח את ה-Apps Script של ה-Sheet<br>
+      2. פרסם: Deploy › New deployment › Web app<br>
+      3. Execute as: Me | Who has access: Anyone<br>
+      4. הדבק כאן את ה-URL שנוצר
+    </div>
+    <button class="config-save" onclick="saveConfig()">שמור וחבר</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let SCRIPT_URL = localStorage.getItem('scriptUrl') || '';
+let allOrders   = [];
+let currentFilter = 'all';
+
+// ============================================================
+// BOOT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  if (!SCRIPT_URL) {
+    openConfig();
+  } else {
+    loadOrders();
+  }
+});
+
+// ============================================================
+// API
+// ============================================================
+async function api(params) {
+  if (!SCRIPT_URL) { openConfig(); return null; }
+  const url = SCRIPT_URL + '?' + new URLSearchParams(params);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function loadOrders() {
+  const wrap = document.getElementById('cardsWrap');
+  const fab  = document.getElementById('fab');
+  fab.classList.add('spinning');
+  wrap.innerHTML = `<div class="state-wrap"><div class="state-icon">⟳</div><div>טוען הזמנות…</div></div>`;
+  try {
+    const data = await api({ action: 'getOrders', status: 'all' });
+    if (!data) return;
+    if (data.error) throw new Error(data.error);
+    allOrders = data.orders || [];
+    updateBadge();
+    renderCards();
+  } catch (e) {
+    wrap.innerHTML = `<div class="state-wrap"><div class="state-icon">⚠</div><div>שגיאה בטעינה<br><small style="color:var(--text-faint)">${e.message}</small></div></div>`;
+  } finally {
+    fab.classList.remove('spinning');
+  }
+}
+
+async function updateOrder(id, status, qtyActual, card) {
+  const btns = card.querySelectorAll('.btn');
+  btns.forEach(b => b.disabled = true);
+  try {
+    const data = await api({ action: 'updateStatus', id, status, qty_actual: qtyActual });
+    if (!data || data.error) throw new Error(data?.error || 'שגיאה');
+    showToast('✓ ' + (status === 'מוכן' ? 'סומן כמוכן!' : 'עודכן ל"' + status + '"'), 'success');
+    // update local data
+    const order = allOrders.find(o => String(o.id) === String(id));
+    if (order) { order.status = status; if (qtyActual) order.qty_actual = qtyActual; }
+    updateBadge();
+    // animate removal or re-render if filter active
+    if (currentFilter !== 'all' && currentFilter !== status) {
+      card.style.transition = 'opacity 0.3s, transform 0.3s';
+      card.style.opacity = '0'; card.style.transform = 'scale(0.95)';
+      setTimeout(() => card.remove(), 300);
+    } else {
+      card.dataset.status = status;
+      card.querySelector('.status-pill').textContent = status;
+      card.querySelector('.status-pill').className = 'status-pill ' + status;
+    }
+  } catch (e) {
+    showToast('✗ שגיאה: ' + e.message, 'error');
+    btns.forEach(b => b.disabled = false);
+  }
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderCards() {
+  const wrap = document.getElementById('cardsWrap');
+  const filtered = allOrders.filter(o =>
+    currentFilter === 'all' ? true : o.status === currentFilter
+  );
+
+  if (filtered.length === 0) {
+    wrap.innerHTML = `<div class="state-wrap"><div class="state-icon">🎉</div><div>${
+      currentFilter === 'all' ? 'אין הזמנות פעילות' : 'אין הזמנות בסטטוס "' + currentFilter + '"'
+    }</div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = '';
+  filtered.forEach((o, idx) => {
+    const card = buildCard(o, idx);
+    wrap.appendChild(card);
+  });
+}
+
+function buildCard(o, idx) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.dataset.status = o.status;
+  div.style.animationDelay = (idx * 35) + 'ms';
+
+  const actionsHtml = buildActions(o);
+
+  div.innerHTML = `
+    <div class="card-header">
+      <div class="order-id">#${escH(o.id)}</div>
+      <div class="status-pill ${escH(o.status)}">${escH(o.status)}</div>
+    </div>
+    <div class="fabric-name">${escH(o.fabric)}</div>
+    <div class="customer-name">${escH(o.customer)}</div>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">הוזמן</span>
+        <span class="meta-value highlight">${escH(o.qty_ordered)} מ'</span>
+      </div>
+      ${o.qty_actual ? `
+      <div class="meta-item">
+        <span class="meta-label">נחתך</span>
+        <span class="meta-value">${escH(o.qty_actual)} מ'</span>
+      </div>` : ''}
+      <div class="meta-item">
+        <span class="meta-label">תאריך</span>
+        <span class="meta-value">${escH(o.date)}</span>
+      </div>
+    </div>
+    ${o.notes ? `<div class="notes-text">${escH(o.notes)}</div>` : ''}
+    ${actionsHtml}
+  `;
+
+  // Wire up buttons
+  const btnStart  = div.querySelector('.btn-start');
+  const btnDone   = div.querySelector('.btn-done');
+  const btnReport = div.querySelector('.btn-report');
+  const qtyInput  = div.querySelector('.qty-input');
+
+  if (btnStart) {
+    btnStart.onclick = () => updateOrder(o.id, 'בחיתוך', '', div);
+  }
+  if (btnDone) {
+    btnDone.onclick = () => {
+      const qty = qtyInput ? qtyInput.value : '';
+      updateOrder(o.id, 'מוכן', qty, div);
+    };
+  }
+  if (btnReport) {
+    btnReport.onclick = () => reportShortage(o, div);
+  }
+
+  return div;
+}
+
+function buildActions(o) {
+  const s = o.status;
+  if (s === 'מוכן') return ''; // no actions needed
+
+  const qtyRow = `
+    <div class="qty-input-row">
+      <span class="qty-label">נחתך בפועל (מ'):</span>
+      <input class="qty-input" type="number" step="0.1" min="0"
+             value="${escH(o.qty_ordered)}" inputmode="decimal">
+    </div>`;
+
+  if (s === 'ממתין') {
+    return `
+      <div class="action-section">
+        ${qtyRow}
+        <div class="btn-row">
+          <button class="btn btn-start">▶ התחל חיתוך</button>
+          <button class="btn btn-done">✓ סיים</button>
+          <button class="btn btn-report" title="דווח חוסר">!</button>
+        </div>
+      </div>`;
+  }
+  if (s === 'בחיתוך') {
+    return `
+      <div class="action-section">
+        ${qtyRow}
+        <div class="btn-row">
+          <button class="btn btn-done">✓ סיים חיתוך</button>
+          <button class="btn btn-report" title="דווח חוסר">!</button>
+        </div>
+      </div>`;
+  }
+  return '';
+}
+
+// ============================================================
+// FILTER
+// ============================================================
+function setFilter(val, btn) {
+  currentFilter = val;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards();
+}
+
+// ============================================================
+// BADGE
+// ============================================================
+function updateBadge() {
+  const waiting = allOrders.filter(o => o.status === 'ממתין').length;
+  const badge = document.getElementById('badge');
+  badge.textContent = waiting;
+  badge.classList.toggle('visible', waiting > 0);
+}
+
+// ============================================================
+// SHORTAGE REPORT
+// ============================================================
+function reportShortage(o, card) {
+  if (confirm(`דווח חוסר עבור "${o.fabric}" (הזמנה #${o.id})?\n\nהסטטוס יעודכן ל"ממתין" עם הערת חוסר.`)) {
+    updateOrder(o.id, 'ממתין', '', card);
+    showToast('⚠ חוסר דווח', 'error');
+  }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  clearTimeout(toastTimer);
+  requestAnimationFrame(() => {
+    t.classList.add('show');
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  });
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function openConfig() {
+  document.getElementById('scriptUrlInput').value = SCRIPT_URL;
+  document.getElementById('configOverlay').classList.add('open');
+}
+function closeConfigOnBg(e) {
+  if (e.target === document.getElementById('configOverlay')) closeConfig();
+}
+function closeConfig() {
+  document.getElementById('configOverlay').classList.remove('open');
+}
+function saveConfig() {
+  const url = document.getElementById('scriptUrlInput').value.trim();
+  if (!url.startsWith('https://script.google.com')) {
+    showToast('❌ כתובת לא תקינה', 'error'); return;
+  }
+  SCRIPT_URL = url;
+  localStorage.setItem('scriptUrl', url);
+  closeConfig();
+  showToast('✓ חיבור נשמר', 'success');
+  loadOrders();
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function escH(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Auto-refresh every 90 seconds
+setInterval(() => { if (SCRIPT_URL) loadOrders(); }, 90000);
+</script>
+</body>
+</html>
