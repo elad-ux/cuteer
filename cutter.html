@@ -563,7 +563,7 @@ async function loadOrders() {
     allOrders = data.orders || [];
     updateBadge();
     updateCounts();
-    if (currentFilter !== 'all'renderCards();
+    renderCards();
   } catch (e) {
     wrap.innerHTML = `<div class="state-wrap"><div class="state-icon">⚠</div><div>שגיאה בטעינה<br><small style="color:var(--text-faint)">${e.message}</small></div></div>`;
   } finally {
@@ -581,7 +581,8 @@ async function updateOrder(id, status, qtyActual, card) {
     const order = allOrders.find(o => String(o.id) === String(id));
     if (order) { order.status = status; if (qtyActual) order.qty_actual = qtyActual; }
     updateBadge();
-    updateCounts(); && currentFilter !== status) {
+    updateCounts();
+    if (currentFilter !== 'all' && currentFilter !== status) {
       card.style.transition = 'opacity 0.3s, transform 0.3s';
       card.style.opacity = '0'; card.style.transform = 'scale(0.95)';
       setTimeout(() => card.remove(), 300);
