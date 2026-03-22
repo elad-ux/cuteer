@@ -96,6 +96,14 @@
     font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
   }
   .filter-btn:active { transform: scale(0.96); }
+  .fcnt {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    background: rgba(255,255,255,0.12);
+    border-radius: 10px; padding: 1px 6px;
+    margin-right: 2px; min-width: 18px; text-align: center;
+  }
+  .filter-btn.active .fcnt { background: rgba(0,0,0,0.18); }
   .filter-btn.active                { background: var(--amber); border-color: var(--amber); color: #000; }
   .filter-btn.status-ממתין.active  { background: var(--amber); border-color: var(--amber); color: #000; }
   .filter-btn.status-בחיתוך.active { background: var(--blue);  border-color: var(--blue);  color: #000; }
@@ -307,10 +315,10 @@
   </header>
 
   <div class="filter-bar">
-    <button class="filter-btn active" data-filter="all"     onclick="setFilter('all',this)">הכל</button>
-    <button class="filter-btn status-ממתין"  data-filter="ממתין"  onclick="setFilter('ממתין',this)">ממתין</button>
-    <button class="filter-btn status-בחיתוך" data-filter="בחיתוך" onclick="setFilter('בחיתוך',this)">בחיתוך</button>
-    <button class="filter-btn status-מוכן"   data-filter="מוכן"   onclick="setFilter('מוכן',this)">מוכן</button>
+    <button class="filter-btn active" data-filter="all"     onclick="setFilter('all',this)">הכל <span class="fcnt" id="cnt-all"></span></button>
+    <button class="filter-btn status-ממתין"  data-filter="ממתין"  onclick="setFilter('ממתין',this)">ממתין <span class="fcnt" id="cnt-ממתין"></span></button>
+    <button class="filter-btn status-בחיתוך" data-filter="בחיתוך" onclick="setFilter('בחיתוך',this)">בחיתוך <span class="fcnt" id="cnt-בחיתוך"></span></button>
+    <button class="filter-btn status-מוכן"   data-filter="מוכן"   onclick="setFilter('מוכן',this)">מוכן <span class="fcnt" id="cnt-מוכן"></span></button>
   </div>
 
   <main class="main" id="cardsWrap"></main>
@@ -554,7 +562,8 @@ async function loadOrders() {
     if (data.error) throw new Error(data.error);
     allOrders = data.orders || [];
     updateBadge();
-    renderCards();
+    updateCounts();
+    if (currentFilter !== 'all'renderCards();
   } catch (e) {
     wrap.innerHTML = `<div class="state-wrap"><div class="state-icon">⚠</div><div>שגיאה בטעינה<br><small style="color:var(--text-faint)">${e.message}</small></div></div>`;
   } finally {
@@ -572,7 +581,7 @@ async function updateOrder(id, status, qtyActual, card) {
     const order = allOrders.find(o => String(o.id) === String(id));
     if (order) { order.status = status; if (qtyActual) order.qty_actual = qtyActual; }
     updateBadge();
-    if (currentFilter !== 'all' && currentFilter !== status) {
+    updateCounts(); && currentFilter !== status) {
       card.style.transition = 'opacity 0.3s, transform 0.3s';
       card.style.opacity = '0'; card.style.transform = 'scale(0.95)';
       setTimeout(() => card.remove(), 300);
@@ -693,7 +702,19 @@ function setFilter(val, btn) {
   renderCards();
 }
 
-function updateBadge() {
+function updateCounts() {
+  const isDone = s => s === 'מוכן @' || s === 'מוכן 💰';
+  const counts = {
+    all:      allOrders.length,
+    'ממתין':  allOrders.filter(o => !o.status || o.status === 'ממתין').length,
+    'בחיתוך': allOrders.filter(o => o.status === 'בחיתוך').length,
+    'מוכן':   allOrders.filter(o => isDone(o.status)).length,
+  };
+  for (const [key, val] of Object.entries(counts)) {
+    const el = document.getElementById('cnt-' + key);
+    if (el) el.textContent = val > 0 ? val : '';
+  }
+}
   const waiting = allOrders.filter(o => o.status === 'ממתין').length;
   const badge = document.getElementById('badge');
   badge.textContent = waiting;
