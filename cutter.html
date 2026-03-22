@@ -717,6 +717,8 @@ function updateCounts() {
     if (el) el.textContent = val > 0 ? val : '';
   }
 }
+
+function updateBadge() {
   const waiting = allOrders.filter(o => o.status === 'ממתין').length;
   const badge = document.getElementById('badge');
   badge.textContent = waiting;
