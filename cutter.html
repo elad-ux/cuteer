@@ -495,7 +495,8 @@ document.getElementById('scriptUrlInline').value = localStorage.getItem('scriptU
 // ============================================================
 // STATE
 // ============================================================
-let SCRIPT_URL    = localStorage.getItem('scriptUrl') || '';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzjanMAqiII579VgHIrL2c5CVnrN7USOzrnFAs2IagggsD51fKmfTZf2styXwTovP0Yrw/exec';
+let SCRIPT_URL    = localStorage.getItem('scriptUrl') || DEFAULT_URL;
 let allOrders     = [];
 let currentFilter = 'all';
 
