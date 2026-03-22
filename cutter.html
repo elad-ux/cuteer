@@ -7,11 +7,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>תור גוזר — גאנה בדים</title>
 <style>
-  /* ============================================================
-     IMPORTANT: החלף את SCRIPT_URL בכתובת ה-Apps Script שלך!
-     ראה הוראות בתחתית הקובץ.
-  ============================================================ */
-
   @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
 
   :root {
@@ -45,61 +40,70 @@
     overscroll-behavior: none;
   }
 
+  /* ── Top nav tabs ── */
+  .top-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky; top: 0; z-index: 200;
+  }
+  .top-tab {
+    flex: 1; padding: 14px 8px;
+    background: none; border: none;
+    color: var(--text-dim);
+    font-family: 'Rubik', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .top-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
   /* ── Header ── */
   .header {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(15,15,17,0.85);
+    position: sticky; top: 47px; z-index: 100;
+    background: rgba(15,15,17,0.92);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
     padding: 0 16px;
-    height: 60px;
+    height: 56px;
     display: flex; align-items: center; justify-content: space-between;
   }
-  .header-logo {
-    font-size: 17px; font-weight: 600; letter-spacing: -0.3px;
-  }
+  .header-logo { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
   .header-logo span { color: var(--amber); }
-
   .badge-count {
     background: var(--amber); color: #000;
     font-size: 12px; font-weight: 700;
     border-radius: 20px; padding: 2px 8px;
-    min-width: 24px; text-align: center;
-    display: none;
+    min-width: 24px; text-align: center; display: none;
   }
   .badge-count.visible { display: inline-block; }
 
   /* ── Filter bar ── */
   .filter-bar {
-    display: flex; gap: 8px;
-    padding: 12px 16px;
+    display: flex; gap: 8px; padding: 12px 16px;
     overflow-x: auto; scrollbar-width: none;
     border-bottom: 1px solid var(--border);
+    background: var(--bg);
   }
   .filter-bar::-webkit-scrollbar { display: none; }
   .filter-btn {
-    flex-shrink: 0;
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-dim);
-    font-family: 'Rubik', sans-serif;
-    font-size: 13px; font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
+    flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-dim); font-family: 'Rubik', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
   }
   .filter-btn:active { transform: scale(0.96); }
-  .filter-btn.active { background: var(--amber); border-color: var(--amber); color: #000; }
-  .filter-btn.status-ממתין.active { background: var(--amber); border-color: var(--amber); color: #000; }
+  .filter-btn.active                { background: var(--amber); border-color: var(--amber); color: #000; }
+  .filter-btn.status-ממתין.active  { background: var(--amber); border-color: var(--amber); color: #000; }
   .filter-btn.status-בחיתוך.active { background: var(--blue);  border-color: var(--blue);  color: #000; }
   .filter-btn.status-מוכן.active   { background: var(--green); border-color: var(--green); color: #000; }
 
-  /* ── Main content ── */
+  /* ── Main ── */
   .main { padding: 12px 12px 100px; }
 
-  /* ── States ── */
   .state-wrap {
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: 12px;
@@ -108,15 +112,11 @@
   }
   .state-icon { font-size: 40px; }
 
-  /* ── Order card ── */
+  /* ── Card ── */
   .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 10px;
-    position: relative;
-    transition: border-color 0.2s, transform 0.15s;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+    position: relative; transition: border-color 0.2s, transform 0.15s;
     animation: slideIn 0.25s ease both;
   }
   .card:active { transform: scale(0.99); }
@@ -124,54 +124,28 @@
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
-  /* left accent strip */
   .card::before {
-    content: '';
-    position: absolute; top: 12px; right: -1px; bottom: 12px;
+    content: ''; position: absolute; top: 12px; right: -1px; bottom: 12px;
     width: 3px; border-radius: 3px 0 0 3px;
   }
   .card[data-status="ממתין"]::before  { background: var(--amber); }
   .card[data-status="בחיתוך"]::before { background: var(--blue);  }
   .card[data-status="מוכן"]::before   { background: var(--green); }
 
-  .card-header {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 10px;
-  }
-  .order-id {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
-    color: var(--text-faint); text-transform: uppercase;
-  }
-  .status-pill {
-    font-size: 11px; font-weight: 600; padding: 3px 10px;
-    border-radius: 20px; border: 1px solid;
-  }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .order-id { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-faint); }
+  .status-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid; }
   .status-pill.ממתין  { color: var(--amber); border-color: var(--amber); background: var(--amber-bg); }
   .status-pill.בחיתוך { color: var(--blue);  border-color: var(--blue);  background: var(--blue-bg);  }
   .status-pill.מוכן   { color: var(--green); border-color: var(--green); background: var(--green-bg); }
 
-  .fabric-name {
-    font-size: 20px; font-weight: 700; margin-bottom: 4px;
-    letter-spacing: -0.3px;
-  }
-  .customer-name {
-    font-size: 13px; color: var(--text-dim); margin-bottom: 12px;
-  }
+  .fabric-name   { font-size: 20px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.3px; }
+  .customer-name { font-size: 13px; color: var(--text-dim); margin-bottom: 12px; }
 
-  .meta-row {
-    display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px;
-  }
-  .meta-item {
-    display: flex; flex-direction: column; gap: 2px;
-  }
-  .meta-label {
-    font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
-    text-transform: uppercase; color: var(--text-faint);
-  }
-  .meta-value {
-    font-size: 15px; font-weight: 500;
-  }
+  .meta-row  { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .meta-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-faint); }
+  .meta-value { font-size: 15px; font-weight: 500; }
   .meta-value.highlight { color: var(--amber); }
 
   .notes-text {
@@ -181,85 +155,52 @@
     border-right: 2px solid var(--text-faint);
   }
 
-  /* ── Action section ── */
-  .action-section {
-    border-top: 1px solid var(--border);
-    padding-top: 14px;
-  }
-  .qty-input-row {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 12px;
-  }
-  .qty-label {
-    font-size: 12px; color: var(--text-dim); white-space: nowrap;
-  }
+  .action-section { border-top: 1px solid var(--border); padding-top: 14px; }
+  .qty-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .qty-label { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
   .qty-input {
-    flex: 1;
-    background: var(--surface2); border: 1px solid var(--border-hi);
+    flex: 1; background: var(--surface2); border: 1px solid var(--border-hi);
     border-radius: var(--radius-sm); color: var(--text);
     font-family: 'Rubik', sans-serif; font-size: 16px; font-weight: 500;
-    padding: 9px 12px; text-align: center;
-    -webkit-appearance: none;
+    padding: 9px 12px; text-align: center; -webkit-appearance: none;
     transition: border-color 0.15s;
   }
-  .qty-input:focus {
-    outline: none; border-color: var(--amber);
-  }
+  .qty-input:focus { outline: none; border-color: var(--amber); }
 
   .btn-row { display: flex; gap: 8px; }
   .btn {
-    flex: 1; padding: 13px 8px;
-    border-radius: var(--radius-sm);
+    flex: 1; padding: 13px 8px; border-radius: var(--radius-sm);
     border: 1px solid var(--border-hi);
     font-family: 'Rubik', sans-serif; font-size: 13px; font-weight: 600;
     cursor: pointer; transition: all 0.15s;
     display: flex; align-items: center; justify-content: center; gap: 6px;
   }
   .btn:active { transform: scale(0.97); }
-
   .btn-start  { background: var(--blue-bg);  border-color: var(--blue);  color: var(--blue);  }
   .btn-done   { background: var(--green-bg); border-color: var(--green); color: var(--green); }
-  .btn-report { background: var(--red-bg);   border-color: var(--red);   color: var(--red);   flex: 0 0 auto; padding: 13px 14px; }
-
+  .btn-report { background: var(--red-bg);   border-color: var(--red);   color: var(--red); flex: 0 0 auto; padding: 13px 14px; }
   .btn:disabled { opacity: 0.4; pointer-events: none; }
 
-  /* spinner inside button */
-  .spinner {
-    width: 14px; height: 14px;
-    border: 2px solid rgba(255,255,255,0.2);
-    border-top-color: currentColor;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    display: none;
-  }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Toast notification ── */
   .toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-    z-index: 999;
-    background: var(--surface2); border: 1px solid var(--border-hi);
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    z-index: 999; background: var(--surface2); border: 1px solid var(--border-hi);
     border-radius: 30px; padding: 10px 20px;
-    font-size: 13px; font-weight: 500;
-    white-space: nowrap;
+    font-size: 13px; font-weight: 500; white-space: nowrap;
     transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
-    opacity: 0;
-    pointer-events: none;
+    opacity: 0; pointer-events: none;
   }
-  .toast.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   .toast.success { border-color: var(--green); color: var(--green); }
   .toast.error   { border-color: var(--red);   color: var(--red);   }
 
-  /* ── Refresh fab ── */
   .fab {
     position: fixed; bottom: 24px; left: 20px;
     width: 52px; height: 52px; border-radius: 50%;
     background: var(--surface2); border: 1px solid var(--border-hi);
-    color: var(--text-dim);
-    font-size: 20px; cursor: pointer;
+    color: var(--text-dim); font-size: 20px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
   }
@@ -268,85 +209,168 @@
 
   /* ── Config overlay ── */
   .config-overlay {
-    position: fixed; inset: 0; z-index: 200;
+    position: fixed; inset: 0; z-index: 300;
     background: rgba(0,0,0,0.7);
     display: flex; align-items: flex-end;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
   }
   .config-overlay.open { opacity: 1; pointer-events: all; }
   .config-sheet {
     width: 100%; background: var(--surface);
     border-radius: var(--radius) var(--radius) 0 0;
-    padding: 24px 20px 40px;
-    border: 1px solid var(--border);
+    padding: 24px 20px 40px; border: 1px solid var(--border);
     transform: translateY(100%);
     transition: transform 0.3s cubic-bezier(0.34,1.4,0.64,1);
   }
   .config-overlay.open .config-sheet { transform: translateY(0); }
   .config-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
   .config-input {
-    width: 100%; background: var(--surface2);
-    border: 1px solid var(--border-hi);
-    border-radius: var(--radius-sm);
-    color: var(--text); font-family: 'Rubik', sans-serif;
-    font-size: 13px; padding: 11px 12px; margin-bottom: 12px;
-    direction: ltr;
+    width: 100%; background: var(--surface2); border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: 'Rubik', sans-serif; font-size: 13px;
+    padding: 11px 12px; margin-bottom: 12px; direction: ltr;
   }
   .config-input:focus { outline: none; border-color: var(--amber); }
-  .config-hint {
-    font-size: 11px; color: var(--text-faint);
-    margin-bottom: 20px; line-height: 1.6;
-  }
+  .config-hint { font-size: 11px; color: var(--text-faint); margin-bottom: 20px; line-height: 1.7; }
   .config-save {
-    width: 100%; padding: 13px;
-    background: var(--amber); border: none;
+    width: 100%; padding: 13px; background: var(--amber); border: none;
     border-radius: var(--radius-sm);
     font-family: 'Rubik', sans-serif; font-size: 15px; font-weight: 700;
     color: #000; cursor: pointer;
+  }
+
+  /* ── Apps Script tab ── */
+  .gs-panel { padding: 16px; }
+  .gs-intro {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
+  }
+  .gs-intro h2 { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: var(--amber); }
+  .gs-step {
+    font-size: 13px; color: var(--text-dim); line-height: 1.8;
+    counter-reset: step;
+  }
+  .gs-step li { list-style: none; padding-right: 28px; position: relative; margin-bottom: 4px; }
+  .gs-step li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute; right: 0;
+    background: var(--surface2); border: 1px solid var(--border-hi);
+    color: var(--amber); font-size: 11px; font-weight: 700;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; top: 2px;
+  }
+  .gs-code-wrap {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .gs-code-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    font-size: 12px; color: var(--text-dim);
+  }
+  .gs-copy-btn {
+    background: var(--amber); border: none; border-radius: 6px;
+    padding: 5px 12px; font-family: 'Rubik', sans-serif;
+    font-size: 12px; font-weight: 600; color: #000; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .gs-copy-btn:active { opacity: 0.7; }
+  .gs-code {
+    padding: 16px; font-family: 'Courier New', monospace;
+    font-size: 11px; line-height: 1.7; color: #c9d1d9;
+    overflow-x: auto; white-space: pre; max-height: 60vh; overflow-y: auto;
+    direction: ltr; text-align: left;
   }
 </style>
 </head>
 <body>
 
-<!-- ══ Header ══ -->
-<header class="header">
-  <div class="header-logo">גאנה <span>בדים</span></div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <span id="badge" class="badge-count"></span>
-    <button onclick="openConfig()" style="background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;padding:4px" title="הגדרות">⚙</button>
-  </div>
-</header>
-
-<!-- ══ Filter bar ══ -->
-<div class="filter-bar">
-  <button class="filter-btn active" data-filter="all"     onclick="setFilter('all',this)">הכל</button>
-  <button class="filter-btn status-ממתין"  data-filter="ממתין"  onclick="setFilter('ממתין',this)">ממתין</button>
-  <button class="filter-btn status-בחיתוך" data-filter="בחיתוך" onclick="setFilter('בחיתוך',this)">בחיתוך</button>
-  <button class="filter-btn status-מוכן"   data-filter="מוכן"   onclick="setFilter('מוכן',this)">מוכן</button>
+<!-- ══ Top navigation ══ -->
+<div class="top-tabs">
+  <button class="top-tab active" onclick="switchTab('orders',this)">📋 תור הזמנות</button>
+  <button class="top-tab"        onclick="switchTab('setup',this)">⚙️ הגדרה ראשונית</button>
 </div>
 
-<!-- ══ Cards ══ -->
-<main class="main" id="cardsWrap"></main>
+<!-- ══════════════════════════════════════
+     TAB 1 — ORDER QUEUE
+══════════════════════════════════════ -->
+<div id="tab-orders" class="tab-panel active">
+
+  <header class="header">
+    <div class="header-logo">גאנה <span>בדים</span></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="badge" class="badge-count"></span>
+      <button onclick="openConfig()" style="background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;padding:4px">⚙</button>
+    </div>
+  </header>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all"     onclick="setFilter('all',this)">הכל</button>
+    <button class="filter-btn status-ממתין"  data-filter="ממתין"  onclick="setFilter('ממתין',this)">ממתין</button>
+    <button class="filter-btn status-בחיתוך" data-filter="בחיתוך" onclick="setFilter('בחיתוך',this)">בחיתוך</button>
+    <button class="filter-btn status-מוכן"   data-filter="מוכן"   onclick="setFilter('מוכן',this)">מוכן</button>
+  </div>
+
+  <main class="main" id="cardsWrap"></main>
+
+  <button class="fab" id="fab" onclick="loadOrders()" title="רענן">↻</button>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     TAB 2 — SETUP (Apps Script + Config)
+══════════════════════════════════════ -->
+<div id="tab-setup" class="tab-panel">
+  <div class="gs-panel">
+
+    <div class="gs-intro">
+      <h2>חיבור ל-Google Sheet — הוראות</h2>
+      <ol class="gs-step">
+        <li>פתח את ה-Google Sheet שלך</li>
+        <li>לחץ: <strong>Extensions › Apps Script</strong></li>
+        <li>מחק את כל הקוד הקיים בחלון</li>
+        <li>לחץ <strong>העתק קוד</strong> למטה ← הדבק שם</li>
+        <li>שמור (Ctrl+S) ואז: <strong>Deploy › New deployment</strong></li>
+        <li>סוג: Web app | Execute as: <em>Me</em> | Access: <em>Anyone</em></li>
+        <li>לחץ Deploy ← העתק את ה-URL שנוצר</li>
+        <li>חזור לטאב "תור הזמנות" ← לחץ ⚙ ← הדבק את ה-URL</li>
+      </ol>
+    </div>
+
+    <!-- URL config inline -->
+    <div class="gs-intro" style="margin-bottom:16px">
+      <h2>כתובת ה-Script (Web App URL)</h2>
+      <input class="config-input" id="scriptUrlInline" type="url" style="margin-bottom:10px"
+             placeholder="https://script.google.com/macros/s/…/exec"
+             autocomplete="off" spellcheck="false">
+      <button class="config-save" style="border-radius:8px" onclick="saveConfigInline()">שמור וחבר</button>
+    </div>
+
+    <div class="gs-code-wrap">
+      <div class="gs-code-header">
+        <span>Code.gs — הדבק ב-Apps Script</span>
+        <button class="gs-copy-btn" onclick="copyGsCode()">📋 העתק קוד</button>
+      </div>
+      <pre class="gs-code" id="gsCodeBlock"></pre>
+    </div>
+
+  </div>
+</div>
 
 <!-- ══ Toast ══ -->
 <div class="toast" id="toast"></div>
 
-<!-- ══ Refresh FAB ══ -->
-<button class="fab" id="fab" onclick="loadOrders()" title="רענן">↻</button>
-
-<!-- ══ Config overlay ══ -->
+<!-- ══ Config overlay (from gear icon) ══ -->
 <div class="config-overlay" id="configOverlay" onclick="closeConfigOnBg(event)">
   <div class="config-sheet">
-    <div class="config-title">חיבור ל-Google Sheet</div>
+    <div class="config-title">כתובת ה-Apps Script</div>
     <input class="config-input" id="scriptUrlInput" type="url"
            placeholder="https://script.google.com/macros/s/…/exec"
            autocomplete="off" spellcheck="false">
     <div class="config-hint">
-      1. פתח את ה-Apps Script של ה-Sheet<br>
-      2. פרסם: Deploy › New deployment › Web app<br>
-      3. Execute as: Me | Who has access: Anyone<br>
-      4. הדבק כאן את ה-URL שנוצר
+      לא עשית את ההגדרה עדיין?<br>
+      עבור לטאב <strong>⚙️ הגדרה ראשונית</strong> לקבלת הוראות מלאות.
     </div>
     <button class="config-save" onclick="saveConfig()">שמור וחבר</button>
   </div>
@@ -354,10 +378,113 @@
 
 <script>
 // ============================================================
+// APPS SCRIPT CODE — מוטמע בתוך ה-HTML
+// ============================================================
+const GS_CODE = `// ============================================================
+// Code.gs — Google Apps Script Backend
+// גיליון: "גאנה בדים"
+// הדבק את הקוד הזה ב: Extensions > Apps Script
+// ============================================================
+
+const SHEET_NAME     = "גאנה בדים";
+const DATA_START_ROW = 7;   // ← שורה ראשונה עם נתונים
+
+const STATUS_WAITING = "ממתין";
+const STATUS_CUTTING = "בחיתוך";
+const STATUS_DONE    = "מוכן";
+
+// עמודות — שנה לפי הסדר האמיתי בגיליון שלך
+const COL = {
+  ID:            1,   // A
+  CUSTOMER:      2,   // B
+  FABRIC:        3,   // C
+  QTY_ORDERED:   4,   // D
+  DATE:          5,   // E
+  STATUS:        6,   // F
+  QTY_ACTUAL:    7,   // G
+  NOTES:         8,   // H
+};
+
+function doGet(e) {
+  const action = e.parameter.action || "getOrders";
+  if (action === "getOrders")   return respond(getOrders(e.parameter.status));
+  if (action === "updateStatus") return respond(updateStatus(
+    e.parameter.id, e.parameter.status, e.parameter.qty_actual || ""
+  ));
+  return respond({ error: "Unknown action" });
+}
+
+function getOrders(filterStatus) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const data  = sheet.getDataRange().getValues();
+  const rows  = data.slice(DATA_START_ROW - 1);
+
+  const orders = rows
+    .filter(row => row[COL.ID - 1] !== "")
+    .filter(row => {
+      if (!filterStatus || filterStatus === "all") return true;
+      return String(row[COL.STATUS - 1]).trim() === filterStatus;
+    })
+    .map(row => ({
+      id:          row[COL.ID          - 1],
+      customer:    row[COL.CUSTOMER    - 1],
+      fabric:      row[COL.FABRIC      - 1],
+      qty_ordered: row[COL.QTY_ORDERED - 1],
+      date:        row[COL.DATE - 1]
+                   ? Utilities.formatDate(new Date(row[COL.DATE - 1]),
+                       Session.getScriptTimeZone(), "dd/MM/yyyy")
+                   : "",
+      status:      row[COL.STATUS     - 1],
+      qty_actual:  row[COL.QTY_ACTUAL - 1] || "",
+      notes:       row[COL.NOTES      - 1] || "",
+    }));
+
+  return { orders };
+}
+
+function updateStatus(orderId, newStatus, qtyActual) {
+  if (!orderId || !newStatus) return { error: "Missing parameters" };
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const data  = sheet.getDataRange().getValues();
+
+  for (let i = DATA_START_ROW - 1; i < data.length; i++) {
+    if (String(data[i][COL.ID - 1]).trim() === String(orderId).trim()) {
+      sheet.getRange(i + 1, COL.STATUS).setValue(newStatus);
+      if (qtyActual !== "") sheet.getRange(i + 1, COL.QTY_ACTUAL).setValue(qtyActual);
+      return { success: true, id: orderId, status: newStatus };
+    }
+  }
+  return { error: "Order not found: " + orderId };
+}
+
+function respond(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function setupColumns() {
+  const sheet     = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const headerRow = DATA_START_ROW - 1;
+  const headers   = sheet.getRange(headerRow, 1, 1, 10).getValues()[0];
+  if (!headers[COL.QTY_ACTUAL - 1]) {
+    sheet.getRange(headerRow, COL.QTY_ACTUAL).setValue("כמות בפועל");
+    SpreadsheetApp.getUi().alert("✅ עמודה 'כמות בפועל' נוספה (שורה " + headerRow + ", עמודה G)");
+  } else {
+    SpreadsheetApp.getUi().alert("✅ הכל תקין. נתונים מתחילים משורה " + DATA_START_ROW);
+  }
+}`;
+
+// Inject into <pre>
+document.getElementById('gsCodeBlock').textContent = GS_CODE;
+// Prefill inline URL input
+document.getElementById('scriptUrlInline').value = localStorage.getItem('scriptUrl') || '';
+
+// ============================================================
 // STATE
 // ============================================================
-let SCRIPT_URL = localStorage.getItem('scriptUrl') || '';
-let allOrders   = [];
+let SCRIPT_URL    = localStorage.getItem('scriptUrl') || '';
+let allOrders     = [];
 let currentFilter = 'all';
 
 // ============================================================
@@ -365,11 +492,41 @@ let currentFilter = 'all';
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
   if (!SCRIPT_URL) {
-    openConfig();
+    // no config yet — show setup tab hint after a tick
+    setTimeout(() => showToast('עבור לטאב ⚙️ הגדרה ראשונית להתחלה', ''), 600);
   } else {
     loadOrders();
   }
 });
+
+// ============================================================
+// TAB SWITCH
+// ============================================================
+function switchTab(name, btn) {
+  document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ============================================================
+// COPY GS CODE
+// ============================================================
+function copyGsCode() {
+  navigator.clipboard.writeText(GS_CODE).then(() => {
+    showToast('✓ קוד הועתק ללוח', 'success');
+    const btn = document.querySelector('.gs-copy-btn');
+    btn.textContent = '✓ הועתק!';
+    setTimeout(() => btn.textContent = '📋 העתק קוד', 2000);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = GS_CODE; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('✓ קוד הועתק', 'success');
+  });
+}
 
 // ============================================================
 // API
@@ -408,11 +565,9 @@ async function updateOrder(id, status, qtyActual, card) {
     const data = await api({ action: 'updateStatus', id, status, qty_actual: qtyActual });
     if (!data || data.error) throw new Error(data?.error || 'שגיאה');
     showToast('✓ ' + (status === 'מוכן' ? 'סומן כמוכן!' : 'עודכן ל"' + status + '"'), 'success');
-    // update local data
     const order = allOrders.find(o => String(o.id) === String(id));
     if (order) { order.status = status; if (qtyActual) order.qty_actual = qtyActual; }
     updateBadge();
-    // animate removal or re-render if filter active
     if (currentFilter !== 'all' && currentFilter !== status) {
       card.style.transition = 'opacity 0.3s, transform 0.3s';
       card.style.opacity = '0'; card.style.transform = 'scale(0.95)';
@@ -436,19 +591,14 @@ function renderCards() {
   const filtered = allOrders.filter(o =>
     currentFilter === 'all' ? true : o.status === currentFilter
   );
-
   if (filtered.length === 0) {
     wrap.innerHTML = `<div class="state-wrap"><div class="state-icon">🎉</div><div>${
       currentFilter === 'all' ? 'אין הזמנות פעילות' : 'אין הזמנות בסטטוס "' + currentFilter + '"'
     }</div></div>`;
     return;
   }
-
   wrap.innerHTML = '';
-  filtered.forEach((o, idx) => {
-    const card = buildCard(o, idx);
-    wrap.appendChild(card);
-  });
+  filtered.forEach((o, idx) => wrap.appendChild(buildCard(o, idx)));
 }
 
 function buildCard(o, idx) {
@@ -456,9 +606,6 @@ function buildCard(o, idx) {
   div.className = 'card';
   div.dataset.status = o.status;
   div.style.animationDelay = (idx * 35) + 'ms';
-
-  const actionsHtml = buildActions(o);
-
   div.innerHTML = `
     <div class="card-header">
       <div class="order-id">#${escH(o.id)}</div>
@@ -471,79 +618,54 @@ function buildCard(o, idx) {
         <span class="meta-label">הוזמן</span>
         <span class="meta-value highlight">${escH(o.qty_ordered)} מ'</span>
       </div>
-      ${o.qty_actual ? `
-      <div class="meta-item">
-        <span class="meta-label">נחתך</span>
-        <span class="meta-value">${escH(o.qty_actual)} מ'</span>
-      </div>` : ''}
+      ${o.qty_actual ? `<div class="meta-item"><span class="meta-label">נחתך</span><span class="meta-value">${escH(o.qty_actual)} מ'</span></div>` : ''}
       <div class="meta-item">
         <span class="meta-label">תאריך</span>
         <span class="meta-value">${escH(o.date)}</span>
       </div>
     </div>
     ${o.notes ? `<div class="notes-text">${escH(o.notes)}</div>` : ''}
-    ${actionsHtml}
+    ${buildActions(o)}
   `;
-
-  // Wire up buttons
   const btnStart  = div.querySelector('.btn-start');
   const btnDone   = div.querySelector('.btn-done');
   const btnReport = div.querySelector('.btn-report');
   const qtyInput  = div.querySelector('.qty-input');
-
-  if (btnStart) {
-    btnStart.onclick = () => updateOrder(o.id, 'בחיתוך', '', div);
-  }
-  if (btnDone) {
-    btnDone.onclick = () => {
-      const qty = qtyInput ? qtyInput.value : '';
-      updateOrder(o.id, 'מוכן', qty, div);
-    };
-  }
-  if (btnReport) {
-    btnReport.onclick = () => reportShortage(o, div);
-  }
-
+  if (btnStart)  btnStart.onclick  = () => updateOrder(o.id, 'בחיתוך', '', div);
+  if (btnDone)   btnDone.onclick   = () => updateOrder(o.id, 'מוכן', qtyInput?.value || '', div);
+  if (btnReport) btnReport.onclick = () => reportShortage(o, div);
   return div;
 }
 
 function buildActions(o) {
   const s = o.status;
-  if (s === 'מוכן') return ''; // no actions needed
-
+  if (s === 'מוכן') return '';
   const qtyRow = `
     <div class="qty-input-row">
       <span class="qty-label">נחתך בפועל (מ'):</span>
       <input class="qty-input" type="number" step="0.1" min="0"
              value="${escH(o.qty_ordered)}" inputmode="decimal">
     </div>`;
-
-  if (s === 'ממתין') {
-    return `
-      <div class="action-section">
-        ${qtyRow}
-        <div class="btn-row">
-          <button class="btn btn-start">▶ התחל חיתוך</button>
-          <button class="btn btn-done">✓ סיים</button>
-          <button class="btn btn-report" title="דווח חוסר">!</button>
-        </div>
-      </div>`;
-  }
-  if (s === 'בחיתוך') {
-    return `
-      <div class="action-section">
-        ${qtyRow}
-        <div class="btn-row">
-          <button class="btn btn-done">✓ סיים חיתוך</button>
-          <button class="btn btn-report" title="דווח חוסר">!</button>
-        </div>
-      </div>`;
-  }
+  if (s === 'ממתין') return `
+    <div class="action-section">${qtyRow}
+      <div class="btn-row">
+        <button class="btn btn-start">▶ התחל חיתוך</button>
+        <button class="btn btn-done">✓ סיים</button>
+        <button class="btn btn-report">!</button>
+      </div>
+    </div>`;
+  if (s === 'בחיתוך') return `
+    <div class="action-section">${qtyRow}
+      <div class="btn-row">
+        <button class="btn btn-done">✓ סיים חיתוך</button>
+        <button class="btn btn-report">!</button>
+      </div>
+    </div>`;
   return '';
 }
 
 // ============================================================
-// FILTER
+// FILTER / BADGE / SHORTAGE
 // ============================================================
 function setFilter(val, btn) {
   currentFilter = val;
@@ -552,9 +674,6 @@ function setFilter(val, btn) {
   renderCards();
 }
 
-// ============================================================
-// BADGE
-// ============================================================
 function updateBadge() {
   const waiting = allOrders.filter(o => o.status === 'ממתין').length;
   const badge = document.getElementById('badge');
@@ -562,11 +681,8 @@ function updateBadge() {
   badge.classList.toggle('visible', waiting > 0);
 }
 
-// ============================================================
-// SHORTAGE REPORT
-// ============================================================
 function reportShortage(o, card) {
-  if (confirm(`דווח חוסר עבור "${o.fabric}" (הזמנה #${o.id})?\n\nהסטטוס יעודכן ל"ממתין" עם הערת חוסר.`)) {
+  if (confirm(`דווח חוסר עבור "${o.fabric}" (#${o.id})?\nהסטטוס יחזור ל"ממתין".`)) {
     updateOrder(o.id, 'ממתין', '', card);
     showToast('⚠ חוסר דווח', 'error');
   }
@@ -578,8 +694,7 @@ function reportShortage(o, card) {
 let toastTimer;
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast ' + type;
+  t.textContent = msg; t.className = 'toast ' + type;
   clearTimeout(toastTimer);
   requestAnimationFrame(() => {
     t.classList.add('show');
@@ -607,9 +722,24 @@ function saveConfig() {
   }
   SCRIPT_URL = url;
   localStorage.setItem('scriptUrl', url);
+  document.getElementById('scriptUrlInline').value = url;
   closeConfig();
   showToast('✓ חיבור נשמר', 'success');
   loadOrders();
+}
+function saveConfigInline() {
+  const url = document.getElementById('scriptUrlInline').value.trim();
+  if (!url.startsWith('https://script.google.com')) {
+    showToast('❌ כתובת לא תקינה', 'error'); return;
+  }
+  SCRIPT_URL = url;
+  localStorage.setItem('scriptUrl', url);
+  document.getElementById('scriptUrlInput').value = url;
+  showToast('✓ חיבור נשמר — עבור לטאב תור הזמנות', 'success');
+  setTimeout(() => {
+    document.querySelector('.top-tab').click();
+    loadOrders();
+  }, 1200);
 }
 
 // ============================================================
@@ -619,7 +749,6 @@ function escH(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Auto-refresh every 90 seconds
 setInterval(() => { if (SCRIPT_URL) loadOrders(); }, 90000);
 </script>
 </body>
