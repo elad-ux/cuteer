@@ -594,9 +594,11 @@ function renderCards() {
   const wrap = document.getElementById('cardsWrap');
   const isDone = s => s === 'מוכן @' || s === 'מוכן 💰';
   const filtered = allOrders.filter(o => {
+    const s = o.status || '';
     if (currentFilter === 'all')   return true;
-    if (currentFilter === 'מוכן') return isDone(o.status);
-    return o.status === currentFilter;
+    if (currentFilter === 'מוכן') return isDone(s);
+    if (currentFilter === 'ממתין') return s === 'ממתין' || s === '';
+    return s === currentFilter;
   });
   if (filtered.length === 0) {
     wrap.innerHTML = `<div class="state-wrap"><div class="state-icon">🎉</div><div>${
@@ -604,7 +606,7 @@ function renderCards() {
     }</div></div>`;
     return;
   }
-  const STATUS_ORDER = { 'ממתין': 0, 'בחיתוך': 1, 'מוכן @': 2, 'מוכן 💰': 2 };
+  const STATUS_ORDER = { '': 0, 'ממתין': 0, 'בחיתוך': 1, 'מוכן @': 2, 'מוכן 💰': 2 };
   filtered.sort((a, b) => {
     const sd = (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9);
     if (sd !== 0) return sd;
