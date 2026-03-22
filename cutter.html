@@ -130,15 +130,16 @@
   }
   .card[data-status="ממתין"]::before  { background: var(--amber); }
   .card[data-status="בחיתוך"]::before { background: var(--blue);  }
-  .card[data-status="מוכן"]::before   { background: var(--green); }
+  .card[data-status="מוכן @"]::before,
+  .card[data-status="מוכן 💰"]::before { background: var(--green); }
 
   .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
   .order-id { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-faint); }
   .status-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid; }
   .status-pill.ממתין  { color: var(--amber); border-color: var(--amber); background: var(--amber-bg); }
   .status-pill.בחיתוך { color: var(--blue);  border-color: var(--blue);  background: var(--blue-bg);  }
-  .status-pill.מוכן   { color: var(--green); border-color: var(--green); background: var(--green-bg); }
-
+  .status-pill.מוכן,
+  [class*="status-pill"][class*="מוכן"] { color: var(--green); border-color: var(--green); background: var(--green-bg); }
   .fabric-name   { font-size: 20px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.3px; }
   .customer-name { font-size: 13px; color: var(--text-dim); margin-bottom: 12px; }
 
@@ -391,7 +392,8 @@ const DATA_START_ROW = 7;   // ← שורה ראשונה עם נתונים
 
 const STATUS_WAITING = "ממתין";
 const STATUS_CUTTING = "בחיתוך";
-const STATUS_DONE    = "מוכן";
+const STATUS_DONE_ROLL = "מוכן @";
+const STATUS_DONE_BAG  = "מוכן 💰";
 
 // עמודות — שנה לפי הסדר האמיתי בגיליון שלך
 const COL = {
@@ -423,7 +425,9 @@ function getOrders(filterStatus) {
     .filter(row => row[COL.ID - 1] !== "")
     .filter(row => {
       if (!filterStatus || filterStatus === "all") return true;
-      return String(row[COL.STATUS - 1]).trim() === filterStatus;
+      const s = String(row[COL.STATUS - 1]).trim();
+      if (filterStatus === "מוכן") return s === "מוכן @" || s === "מוכן 💰";
+      return s === filterStatus;
     })
     .map(row => ({
       id:          row[COL.ID          - 1],
@@ -588,15 +592,24 @@ async function updateOrder(id, status, qtyActual, card) {
 // ============================================================
 function renderCards() {
   const wrap = document.getElementById('cardsWrap');
-  const filtered = allOrders.filter(o =>
-    currentFilter === 'all' ? true : o.status === currentFilter
-  );
+  const isDone = s => s === 'מוכן @' || s === 'מוכן 💰';
+  const filtered = allOrders.filter(o => {
+    if (currentFilter === 'all')   return true;
+    if (currentFilter === 'מוכן') return isDone(o.status);
+    return o.status === currentFilter;
+  });
   if (filtered.length === 0) {
     wrap.innerHTML = `<div class="state-wrap"><div class="state-icon">🎉</div><div>${
       currentFilter === 'all' ? 'אין הזמנות פעילות' : 'אין הזמנות בסטטוס "' + currentFilter + '"'
     }</div></div>`;
     return;
   }
+  const STATUS_ORDER = { 'ממתין': 0, 'בחיתוך': 1, 'מוכן @': 2, 'מוכן 💰': 2 };
+  filtered.sort((a, b) => {
+    const sd = (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9);
+    if (sd !== 0) return sd;
+    return (a.date || '').localeCompare(b.date || '');
+  });
   wrap.innerHTML = '';
   filtered.forEach((o, idx) => wrap.appendChild(buildCard(o, idx)));
 }
@@ -628,37 +641,41 @@ function buildCard(o, idx) {
     ${buildActions(o)}
   `;
   const btnStart  = div.querySelector('.btn-start');
-  const btnDone   = div.querySelector('.btn-done');
+  const btnRoll   = div.querySelector('.btn-roll');
+  const btnBag    = div.querySelector('.btn-bag');
   const btnReport = div.querySelector('.btn-report');
   const qtyInput  = div.querySelector('.qty-input');
-  if (btnStart)  btnStart.onclick  = () => updateOrder(o.id, 'בחיתוך', '', div);
-  if (btnDone)   btnDone.onclick   = () => updateOrder(o.id, 'מוכן', qtyInput?.value || '', div);
+  if (btnStart)  btnStart.onclick = () => updateOrder(o.id, 'בחיתוך', '', div);
+  if (btnRoll)   btnRoll.onclick  = () => updateOrder(o.id, 'מוכן @',  qtyInput?.value || '', div);
+  if (btnBag)    btnBag.onclick   = () => updateOrder(o.id, 'מוכן 💰', qtyInput?.value || '', div);
   if (btnReport) btnReport.onclick = () => reportShortage(o, div);
   return div;
 }
 
 function buildActions(o) {
   const s = o.status;
-  if (s === 'מוכן') return '';
+  if (s === 'מוכן @' || s === 'מוכן 💰') return '';
   const qtyRow = `
     <div class="qty-input-row">
       <span class="qty-label">נחתך בפועל (מ'):</span>
       <input class="qty-input" type="number" step="0.1" min="0"
              value="${escH(o.qty_ordered)}" inputmode="decimal">
     </div>`;
+  const doneButtons = `
+        <button class="btn btn-done btn-roll">@ גליל</button>
+        <button class="btn btn-done btn-bag">💰 שקית</button>
+        <button class="btn btn-report">חוסר</button>`;
   if (s === 'ממתין') return `
     <div class="action-section">${qtyRow}
       <div class="btn-row">
-        <button class="btn btn-start">▶ התחל חיתוך</button>
-        <button class="btn btn-done">✓ סיים</button>
-        <button class="btn btn-report">!</button>
+        <button class="btn btn-start">▶ התחל</button>
+        ${doneButtons}
       </div>
     </div>`;
   if (s === 'בחיתוך') return `
     <div class="action-section">${qtyRow}
       <div class="btn-row">
-        <button class="btn btn-done">✓ סיים חיתוך</button>
-        <button class="btn btn-report">!</button>
+        ${doneButtons}
       </div>
     </div>`;
   return '';
